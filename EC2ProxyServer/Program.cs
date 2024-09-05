@@ -65,9 +65,10 @@ class ProxyServer
         string host = hostPortSplit[0];
         int port = hostPortSplit.Length == 2 ? int.Parse(hostPortSplit[1]) : 443;
 
+        TcpClient server = null;
         try
         {
-            TcpClient server = new TcpClient(host, port);
+            server = new TcpClient();
             await server.ConnectAsync(host, port);
 
             NetworkStream serverStream = server.GetStream();
@@ -82,7 +83,6 @@ class ProxyServer
 
             await Task.WhenAny(clientToServer, serverToClient);
 
-            server.Close();
         }
         catch (IOException ex)
         {
@@ -91,6 +91,13 @@ class ProxyServer
         catch (Exception ex)
         {
             Console.WriteLine($"Error connecting to server: {ex.Message}");
+        }
+        finally
+        {
+            if (server != null)
+            {
+                server.Close(); 
+            }
         }
     }
 
@@ -102,10 +109,10 @@ class ProxyServer
             Console.WriteLine("Host not found in the request");
             return;
         }
-
+        TcpClient server = null;
         try
         {
-            TcpClient server = new TcpClient();
+            server = new TcpClient();
             await server.ConnectAsync(host, 80);
 
             NetworkStream serverStream = server.GetStream();
@@ -124,8 +131,6 @@ class ProxyServer
             }
 
             await clientStream.WriteAsync(buffer, 0, bytesRead);
-
-            server.Close();
         }
         catch (IOException ex)
         {
@@ -134,6 +139,13 @@ class ProxyServer
         catch (Exception ex)
         {
             Console.WriteLine($"Error connecting to server: {ex.Message}");
+        }
+        finally
+        {
+            if (server != null)
+            {
+                server.Close(); // Ensure the server TcpClient is closed
+            }
         }
     }
 
